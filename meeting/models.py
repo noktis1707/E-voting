@@ -25,27 +25,27 @@ class Registrar(models.Model):
         db_table = 'meeting_registrar'
 
 class Main(models.Model):
-    meeting_id = models.IntegerField(primary_key=True)
-    meeting_name = models.CharField(max_length=100, blank=True, null=True)
-    issuer = models.ForeignKey(Issuer, models.DO_NOTHING, blank=True, null=True)
-    meeting_location = models.CharField(max_length=200, blank=True, null=True)
-    meeting_date = models.DateField(blank=True, null=True)
-    decision_date = models.DateField(blank=True, null=True)
-    protocol_date = models.DateField(blank=True, null=True)
-    deadline_date = models.DateField(blank=True, null=True)
-    checkin = models.DateTimeField(blank=True, null=True)
-    closeout = models.DateTimeField(blank=True, null=True)
-    meeting_open = models.DateTimeField(blank=True, null=True)
-    meeting_close = models.DateTimeField(blank=True, null=True)
-    vote_counting = models.DateTimeField(blank=True, null=True)
-    annual_or_unscheduled = models.BooleanField()
-    first_or_repeated = models.BooleanField()
-    record_date = models.DateField(blank=True, null=True)
-    early_registration = models.BooleanField()
-    meeting_url = models.CharField(max_length=100, blank=True, null=True)
-    inter_or_extra_mural = models.BooleanField()
-    registrar = models.ForeignKey(Registrar, models.DO_NOTHING, blank=True, null=True)
-    status = models.IntegerField(blank=True, null=True)
+    meeting_id = models.AutoField(primary_key=True)     # номер в базе Meeting
+    meeting_name = models.CharField(max_length=100, blank=True, null=True)      # описание собрания
+    issuer = models.ForeignKey(Issuer, models.DO_NOTHING, blank=True, null=True)    # код эмитента
+    meeting_location = models.CharField(max_length=200, blank=True, null=True)      # Место проведения \ почтовый адрес для направления бюллетеней
+    meeting_date = models.DateField(blank=True, null=True)      # Дата собрания
+    decision_date = models.DateField(blank=True, null=True)     # Дата принятия решения о созыве ОСА
+    protocol_date = models.DateField(blank=True, null=True)     # Дата составления протокола
+    deadline_date = models.DateField(blank=True, null=True)     # Дата окончания приема бюллетеней
+    checkin = models.DateTimeField(blank=True, null=True)       # Начало регистрации (время)
+    closeout = models.DateTimeField(blank=True, null=True)      # Окончание регистрации
+    meeting_open = models.DateTimeField(blank=True, null=True)  # Начало собрания
+    meeting_close = models.DateTimeField(blank=True, null=True) # Окончание собрания
+    vote_counting = models.DateTimeField(blank=True, null=True) # Начало подсчета голосов
+    annual_or_unscheduled = models.BooleanField()               # Вид собрания (годовое или внеочередное) True - годовое, False - внеочередное
+    first_or_repeated = models.BooleanField(blank=True, null=True)  # повторное или нет True - повторное, False - первичное
+    record_date = models.DateField(blank=True, null=True)   # Дата составления списка
+    early_registration = models.BooleanField(blank=True, null=True) # досрочная регистрация
+    meeting_url = models.CharField(max_length=100, blank=True, null=True) # ссылка на трансляцию
+    inter_or_extra_mural = models.BooleanField()                          # очное/заочное True - очное, False - заочное
+    registrar = models.ForeignKey(Registrar, models.DO_NOTHING, blank=True, null=True) #  код регистратора (ЦО, Тюмень и т.д.)
+    status = models.IntegerField(blank=True, null=True) # статус собрания (Ожидается, Разрешена регистрация, Разрешено голосование, Голосование завершено, Собрание завершилось)  
 
     class Meta:
         db_table = 'meeting_main'
@@ -53,8 +53,8 @@ class Main(models.Model):
 class Agenda(models.Model):
     question_id = models.AutoField(primary_key=True)
     meeting = models.ForeignKey(Main, on_delete=models.CASCADE, related_name='agenda')
-    single_vote_per_shareholder = models.BooleanField()
-    interest = models.BooleanField()
+    single_vote_per_shareholder = models.BooleanField(default=False)
+    interest = models.BooleanField(default=False)
     question = models.TextField()
     decision = models.TextField()
     cumulative = models.BooleanField()
@@ -66,26 +66,18 @@ class Agenda(models.Model):
 
 class QuestionDetail(models.Model):
     question_id = models.ForeignKey(Agenda, on_delete=models.CASCADE)
-    meeting_id = models.IntegerField(Main, on_delete=models.CASCADE)
-    detail_id = models.IntegerField()
+    meeting_id = models.ForeignKey(Main, on_delete=models.CASCADE)
+    detail_id = models.AutoField(primary_key=True)
     detail_text = models.TextField()
 
     class Meta:
         db_table = 'meeting_question_detail'
         unique_together = (('meeting_id', 'question_id', 'detail_id'),)
 
-class UserLink(models.Model):
-    user = models.OneToOneField(User, models.DO_NOTHING, primary_key=True)
-    key = models.CharField(max_length=100, blank=True, null=True)
-    url = models.CharField(max_length=100, blank=True, null=True)
-
-    class Meta:
-        db_table = 'meeting_user_link'
-
 
 class VoteCount(models.Model):
     vote_count_id = models.AutoField(primary_key=True)
-    meeting = models.ForeignKey(Main, models.DO_NOTHING)
+    meeting = models.ForeignKey(Main, on_delete=models.CASCADE)
     account_id = models.IntegerField()
     account_fullname = models.CharField(max_length=300)
     json_quantity = models.JSONField(blank=True, null=True)
@@ -107,25 +99,32 @@ class VotingResult(models.Model):
         unique_together = (('meeting_id', 'account_id', 'user_id'),)
 
 class DjangoRelation(models.Model):
-    vote_count = models.ForeignKey('VoteCount', models.DO_NOTHING)
-    voting_result = models.ForeignKey('VotingResult', models.DO_NOTHING)
-    user = models.ForeignKey(User, models.DO_NOTHING)
-    meeting = models.ForeignKey('Main', models.DO_NOTHING)
+    vote_count = models.ForeignKey(VoteCount, on_delete=models.CASCADE)
+    voting_result = models.ForeignKey(VotingResult, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    meeting = models.ForeignKey(Main, on_delete=models.CASCADE)
     account_id = models.IntegerField()
-    registered = models.BooleanField(blank=True, null=True, default=False)
+    registered = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'meeting_django_relation'
         unique_together = (('meeting', 'account_id', 'user'),)
 
-
 class Docs(models.Model):
-    meeting = models.OneToOneField(Main, on_delete=models.CASCADE)  # The composite primary key (meeting_id, id) found, that is not supported. The first column is selected.
+    meeting = models.ForeignKey(Main, on_delete=models.CASCADE)  # The composite primary key (meeting_id, id) found, that is not supported. The first column is selected.
     id = models.AutoField(primary_key=True)
     fname = models.CharField(max_length=200, blank=True, null=True)
-    is_result = models.BooleanField(blank=True, null=True)
+    is_result = models.BooleanField(blank=True, null=True, default=False)
     url = models.CharField(max_length=200, blank=True, null=True)
 
     class Meta:
         db_table = 'meeting_docs'
         unique_together = (('meeting', 'id'),)
+
+class UserLink(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
+    key = models.CharField(max_length=100, blank=True, null=True)
+    url = models.CharField(max_length=100, blank=True, null=True)
+
+    class Meta:
+        db_table = 'meeting_user_link'

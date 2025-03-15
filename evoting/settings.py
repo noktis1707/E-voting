@@ -37,8 +37,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
 
     'meeting',
+    'users',
 ]
 
 MIDDLEWARE = [
@@ -127,3 +129,21 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AUTH_USER_MODEL = 'users.User'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),  # Токен живет 1 час
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),  # Refresh токен живет 7 дней
+    "ROTATE_REFRESH_TOKENS": True,  # Обновлять refresh токен при каждом обновлении
+    "BLACKLIST_AFTER_ROTATION": True,  # Запрещать использование старых refresh токенов
+    "AUTH_HEADER_TYPES": ("Bearer",),  # Используем заголовок Authorization: Bearer <token>
+}
