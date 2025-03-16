@@ -4,10 +4,10 @@ from .models import Main, QuestionDetail, Agenda
 class QuestionDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = QuestionDetail
-        fields = ["detail_text"]
+        fields = ['detail_id','detail_text']
 
 class AgendaSerializer(serializers.ModelSerializer):
-    details = QuestionDetailSerializer(many=True, required=False)
+    details = QuestionDetailSerializer(many=True, source='detail')
     seat_count = serializers.IntegerField(required=False)
 
     class Meta:
@@ -18,7 +18,7 @@ class AgendaSerializer(serializers.ModelSerializer):
         details_data = validated_data.pop('details', []) if 'details' in validated_data else []
         is_cumulative = validated_data.get('cumulative', False)
 
-        # Устанавливаем seat_count перед созданием
+        # Устанавливаем seat_count в зависимости от количества подвопросов, если нет, то 1
         seat_count = len(details_data) if is_cumulative else 1
         validated_data['seat_count'] = seat_count  
 
@@ -58,10 +58,10 @@ class MeetingSerializer(serializers.ModelSerializer):
             # Устанавливаем seat_count перед созданием Agenda
             agenda_item['seat_count'] = len(details_data) if is_cumulative else 1
 
-            # Создаем запись повестки дня
+            # Создание записи повестки дня
             agenda = Agenda.objects.create(meeting=meeting, **agenda_item)
 
-            # Создаем подвопросы только для кумулятивных вопросов
+            # Создани подвопросоа только для кумулятивных вопросов
             if is_cumulative and details_data:
                 for detail in details_data:
                     QuestionDetail.objects.create(question_id=agenda, meeting_id=meeting, **detail)
@@ -69,6 +69,6 @@ class MeetingSerializer(serializers.ModelSerializer):
             else:
                 agenda.seat_count = 1  # Если не кумулятивный, устанавливаем 1
 
-            agenda.save()  # Обновляем запись в базе
+            agenda.save() 
 
         return meeting

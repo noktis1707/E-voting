@@ -65,7 +65,7 @@ class Agenda(models.Model):
         unique_together = (('meeting', 'question_id'),)
 
 class QuestionDetail(models.Model):
-    question_id = models.ForeignKey(Agenda, on_delete=models.CASCADE)
+    question_id = models.ForeignKey(Agenda, on_delete=models.CASCADE, related_name='detail')
     meeting_id = models.ForeignKey(Main, on_delete=models.CASCADE)
     detail_id = models.AutoField(primary_key=True)
     detail_text = models.TextField()

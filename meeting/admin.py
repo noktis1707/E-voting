@@ -5,18 +5,18 @@ from .models import Main, Registrar, Issuer, Agenda, QuestionDetail, VoteCount, 
 
 class MeetingAdmin(admin.ModelAdmin):
     list_display = [ 
-            'meeting_name', 'meeting_date', 'status'
+            'meeting_name', 'meeting_id', 'meeting_date', 'status'
         ]
     search_fields = ('issuer', 'registrar') 
 
 class AgendaAdmin(admin.ModelAdmin):
     list_display = [ 
-            'question', 'meeting', 'cumulative', 'seat_count'
+            'question', 'question_id', 'meeting', 'cumulative', 'seat_count'
         ]
 
 class QuestionDetailAdmin(admin.ModelAdmin):
     list_display = [ 
-            'detail_text', 'question_id', 'meeting_id'
+            'detail_text', 'detail_id', 'question_id', 'meeting_id'
         ]
 
 class DjangoRelationAdmin(admin.ModelAdmin):

@@ -5,7 +5,7 @@ from django.contrib.auth import authenticate, login
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated 
 
-    
+
 class LoginView(APIView):
 
     def post(self, request, *args, **kwargs):
