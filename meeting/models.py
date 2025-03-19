@@ -1,10 +1,11 @@
+from django.utils import timezone
 from django.db import models
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
 class Issuer(models.Model):
-    issuer_id = models.IntegerField(primary_key=True)
+    issuer_id = models.AutoField(primary_key=True)
     full_name = models.CharField(max_length=300)
     short_name = models.CharField(max_length=96)
     address = models.CharField(max_length=256)
@@ -15,7 +16,7 @@ class Issuer(models.Model):
         db_table = 'meeting_issuer'
 
 class Registrar(models.Model):
-    registrar_id = models.IntegerField(primary_key=True)
+    registrar_id = models.AutoField(primary_key=True)
     registrar_name = models.CharField(max_length=300)
     address = models.CharField(max_length=256)
     zipcode = models.IntegerField()
@@ -25,6 +26,14 @@ class Registrar(models.Model):
         db_table = 'meeting_registrar'
 
 class Main(models.Model):
+    STATUS_CHOICES = [
+        (1, 'Ожидается'),
+        (2, 'Разрешена регистрация'),
+        (3, 'Разрешена голосование'),
+        (4, 'Голосование завершено'),
+        (5, 'Собрание завершилось')
+    ]
+
     meeting_id = models.AutoField(primary_key=True)     # номер в базе Meeting
     meeting_name = models.CharField(max_length=100, blank=True, null=True)      # описание собрания
     issuer = models.ForeignKey(Issuer, models.DO_NOTHING, blank=True, null=True)    # код эмитента
@@ -45,7 +54,21 @@ class Main(models.Model):
     meeting_url = models.CharField(max_length=100, blank=True, null=True) # ссылка на трансляцию
     inter_or_extra_mural = models.BooleanField()                          # очное/заочное True - очное, False - заочное
     registrar = models.ForeignKey(Registrar, models.DO_NOTHING, blank=True, null=True) #  код регистратора (ЦО, Тюмень и т.д.)
-    status = models.IntegerField(blank=True, null=True) # статус собрания (Ожидается, Разрешена регистрация, Разрешено голосование, Голосование завершено, Собрание завершилось)  
+    status = models.IntegerField(blank=True, null=True, choices=STATUS_CHOICES, default='1') # статус собрания (Ожидается, Разрешена регистрация, Разрешено голосование, Голосование завершено, Собрание завершилось)  
+
+    def update_status(self):
+        now = timezone.now()
+
+        if self.meeting_close and now >= self.meeting_close:
+            self.status = 5  # Собрание завершилось
+        elif self.vote_counting and now >= self.vote_counting:
+            self.status = 4  # Голосование завершено
+        elif self.meeting_open and now >= self.meeting_open:
+            self.status = 3  # Разрешено голосование
+        elif self.checkin and now >= self.checkin:
+            self.status = 2  # Разрешена регистрация
+        else:
+            self.status = 1  # Ожидается
 
     class Meta:
         db_table = 'meeting_main'
@@ -65,8 +88,8 @@ class Agenda(models.Model):
         unique_together = (('meeting', 'question_id'),)
 
 class QuestionDetail(models.Model):
-    question_id = models.ForeignKey(Agenda, on_delete=models.CASCADE, related_name='detail')
-    meeting_id = models.ForeignKey(Main, on_delete=models.CASCADE)
+    question = models.ForeignKey(Agenda, on_delete=models.CASCADE, related_name='detail')
+    meeting = models.ForeignKey(Main, on_delete=models.CASCADE)
     detail_id = models.AutoField(primary_key=True)
     detail_text = models.TextField()
 
@@ -89,9 +112,9 @@ class VoteCount(models.Model):
 
 class VotingResult(models.Model):
     voting_result_id = models.AutoField(primary_key=True)
-    meeting_id = models.ForeignKey(Main, on_delete=models.CASCADE)
+    meeting = models.ForeignKey(Main, on_delete=models.CASCADE)
     account_id = models.IntegerField()
-    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     json_result = models.JSONField(blank=True, null=True)
 
     class Meta:
@@ -111,7 +134,7 @@ class DjangoRelation(models.Model):
         unique_together = (('meeting', 'account_id', 'user'),)
 
 class Docs(models.Model):
-    meeting = models.ForeignKey(Main, on_delete=models.CASCADE)  # The composite primary key (meeting_id, id) found, that is not supported. The first column is selected.
+    meeting = models.ForeignKey(Main, on_delete=models.CASCADE) 
     id = models.AutoField(primary_key=True)
     fname = models.CharField(max_length=200, blank=True, null=True)
     is_result = models.BooleanField(blank=True, null=True, default=False)
@@ -128,3 +151,11 @@ class UserLink(models.Model):
 
     class Meta:
         db_table = 'meeting_user_link'
+
+# class Messages(models.Model):
+#     meeting = models.OneToOneField(Main, on_delete=models.CASCADE)
+#     created_at = models.DateField(auto_now_add=True)
+#     updated_at = models.DateField(auto_now=True)
+#     sent_at = models.DateField(auto_now=True)
+#     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='created_by', blank=True, null=True)
+#     is_read = models.BooleanField(default=False)

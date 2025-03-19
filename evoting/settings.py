@@ -132,18 +132,24 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'users.User'
 
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
-}
+# REST_FRAMEWORK = {
+#     'DEFAULT_AUTHENTICATION_CLASSES': (
+#         'rest_framework.authentication.TokenAuthentication',
+#     ),
+# }
 
-from datetime import timedelta
+# REST_FRAMEWORK = {
+#     'DEFAULT_AUTHENTICATION_CLASSES': (
+#         'rest_framework_simplejwt.authentication.JWTAuthentication',
+#     ),
+# }
 
-SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),  # Токен живет 1 час
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),  # Refresh токен живет 7 дней
-    "ROTATE_REFRESH_TOKENS": True,  # Обновлять refresh токен при каждом обновлении
-    "BLACKLIST_AFTER_ROTATION": True,  # Запрещать использование старых refresh токенов
-    "AUTH_HEADER_TYPES": ("Bearer",),  # Используем заголовок Authorization: Bearer <token>
-}
+# from datetime import timedelta
+
+# SIMPLE_JWT = {
+#     "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),  # Токен живет 1 час
+#     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),  # Refresh токен живет 7 дней
+#     "ROTATE_REFRESH_TOKENS": True,  # Обновлять refresh токен при каждом обновлении
+#     "BLACKLIST_AFTER_ROTATION": True,  # Запрещать использование старых refresh токенов
+#     "AUTH_HEADER_TYPES": ("Bearer",),  # Используем заголовок Authorization: Bearer <token>
+# }

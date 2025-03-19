@@ -14,7 +14,7 @@ from rest_framework.decorators import action
 # from rest_framework.response import Response
 
 # Собрания
-class MeetingView(viewsets.ModelViewSet, APIView):
+class MeetingView(viewsets.ModelViewSet):
     serializer_class = MeetingSerializer
     permission_classes = [permissions.IsAuthenticated, IsAdminOrReadOnly]
 
@@ -59,26 +59,40 @@ class MeetingView(viewsets.ModelViewSet, APIView):
 class MeetingCreateView(viewsets.ModelViewSet):
     queryset = Main.objects.all()
     serializer_class = MeetingSerializer
-    permission_classes = [permissions.IsAuthenticated, IsAdminOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
 
     def post(self, request, *args, **kwargs):
         if not request.user.is_staff:
             return Response({"error": "Создавать собрания могут только администраторы."},
                             status=status.HTTP_403_FORBIDDEN)
-        serializer = MeetingSerializer(data=request.data)
+        serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+   
+        
 
-class MeetingDetailView(generics.RetrieveAPIView):
+class MeetingUpdateView(generics.UpdateAPIView):
     queryset = Main.objects.all()
     serializer_class = MeetingSerializer
-    lookup_field = 'meeting_id'  # Поле для поиска записи
+    def put(self, request,  *args, **kwargs):
+        if not request.user.is_staff:
+            return Response({"error": "Изменять собрания могут только администраторы."},
+                            status=status.HTTP_403_FORBIDDEN)
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            serializer.update()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 # Бюллетень
 class VoteView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = MeetingSerializer
+
 
     # Получение всех данный (собрание, повестка дня, подвопросы, лицевые счета, количество голосов) для конкретного пользователя
     def get(self, request, meeting_id, *args, **kwargs):
@@ -225,6 +239,9 @@ class RegisterForMeetingView(APIView):
         user = request.user
         meeting = get_object_or_404(Main, meeting_id=meeting_id)
 
+        if meeting.status != 2:
+            return Response({"error": "Регистрация не разрешена."}, status=status.HTTP_400_BAD_REQUEST)
+
         # Проверка на наличие связей
         registrations = DjangoRelation.objects.filter(user=user, meeting=meeting)
 
@@ -318,3 +335,27 @@ class AdminVotingResultsView(APIView):
             response_data.append(question_data)
 
         return Response({"SummarizedVoteResults": response_data}, status=status.HTTP_200_OK)
+    
+# Список зарегестрированных на собрании лиц (для админа)
+class RegisteredUsersView(generics.ListAPIView):
+    permission_classes = [permissions.IsAdminUser]
+
+    def get(self, request, meeting_id):
+        meeting = get_object_or_404(Main, meeting_id=meeting_id)
+        users_dict = []
+
+        # Получаем account_fullname
+        account_info = {
+            (vote.account_id, vote.meeting_id): vote.account_fullname
+            for vote in VoteCount.objects.filter(meeting=meeting)
+        }
+
+        for relation in DjangoRelation.objects.filter(meeting=meeting, registered=True).select_related("user"):
+            
+            account_fullname = account_info.get((relation.account_id, meeting.meeting_id), "Неизвестный счёт")
+            users_dict.append({
+                "account_id": relation.account_id,
+                "account_fullname": account_fullname
+            })
+
+        return Response(users_dict, status=status.HTTP_200_OK)

@@ -42,4 +42,6 @@ admin.site.register(QuestionDetail, QuestionDetailAdmin)
 admin.site.register(VoteCount, VoteCountAdmin)
 admin.site.register(VotingResult, VotingResultAdmin)
 admin.site.register(DjangoRelation, DjangoRelationAdmin)
+admin.site.register(Registrar)
+admin.site.register(Issuer)
 

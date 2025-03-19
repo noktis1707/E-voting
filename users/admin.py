@@ -8,7 +8,7 @@ class CustomUserAdmin(UserAdmin):
     )
     fieldsets = (
         (None, {'fields': ('username', 'password', 'first_name', 'last_name', 'email',
-                            'is_active', 'is_staff', 'full_name', 's_n', 'born')}), 
+                            'is_active', 'is_staff', 'full_name', 's_n', 'born', 'groups')}), 
     )
 
 admin.site.register(User, CustomUserAdmin)
