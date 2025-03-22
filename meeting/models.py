@@ -29,7 +29,7 @@ class Main(models.Model):
     STATUS_CHOICES = [
         (1, 'Ожидается'),
         (2, 'Разрешена регистрация'),
-        (3, 'Разрешена голосование'),
+        (3, 'Разрешено голосование'),
         (4, 'Голосование завершено'),
         (5, 'Собрание завершилось')
     ]
@@ -40,21 +40,27 @@ class Main(models.Model):
     meeting_location = models.CharField(max_length=200, blank=True, null=True)      # Место проведения \ почтовый адрес для направления бюллетеней
     meeting_date = models.DateField(blank=True, null=True)      # Дата собрания
     decision_date = models.DateField(blank=True, null=True)     # Дата принятия решения о созыве ОСА
-    protocol_date = models.DateField(blank=True, null=True)     # Дата составления протокола
-    deadline_date = models.DateField(blank=True, null=True)     # Дата окончания приема бюллетеней
+    annual_or_unscheduled = models.BooleanField()               # Вид собрания (годовое или внеочередное) True - годовое, False - внеочередное
+    first_or_repeated = models.BooleanField(blank=True, null=True)  # повторное или нет True - повторное, False - первичное
+    inter_or_extra_mural = models.BooleanField()                # очное/заочное True - очное, False - заочное
+    record_date = models.DateField(blank=True, null=True)       # Дата составления списка
     checkin = models.DateTimeField(blank=True, null=True)       # Начало регистрации (время)
     closeout = models.DateTimeField(blank=True, null=True)      # Окончание регистрации
     meeting_open = models.DateTimeField(blank=True, null=True)  # Начало собрания
     meeting_close = models.DateTimeField(blank=True, null=True) # Окончание собрания
-    vote_counting = models.DateTimeField(blank=True, null=True) # Начало подсчета голосов
-    annual_or_unscheduled = models.BooleanField()               # Вид собрания (годовое или внеочередное) True - годовое, False - внеочередное
-    first_or_repeated = models.BooleanField(blank=True, null=True)  # повторное или нет True - повторное, False - первичное
-    record_date = models.DateField(blank=True, null=True)   # Дата составления списка
     early_registration = models.BooleanField(blank=True, null=True) # досрочная регистрация
+    deadline_date = models.DateField(blank=True, null=True)     # Дата окончания приема бюллетеней
+    vote_counting = models.DateTimeField(blank=True, null=True) # Начало подсчета голосов
     meeting_url = models.CharField(max_length=100, blank=True, null=True) # ссылка на трансляцию
-    inter_or_extra_mural = models.BooleanField()                          # очное/заочное True - очное, False - заочное
     registrar = models.ForeignKey(Registrar, models.DO_NOTHING, blank=True, null=True) #  код регистратора (ЦО, Тюмень и т.д.)
+    protocol_date = models.DateField(blank=True, null=True)     # Дата составления протокола
     status = models.IntegerField(blank=True, null=True, choices=STATUS_CHOICES, default='1') # статус собрания (Ожидается, Разрешена регистрация, Разрешено голосование, Голосование завершено, Собрание завершилось)  
+
+    is_draft = models.BooleanField(default = True) # Черновик ли он 
+    created_at = models.DateField(auto_now_add=True) # Дата создания
+    updated_at = models.DateField(auto_now=True, blank=True, null=True) # Дата последнего изменения
+    created_by = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True) # Кто создал (email)
+    sent_at = models.DateField(blank=True, null=True) # Дата отправления
 
     def update_status(self):
         now = timezone.now()
@@ -69,6 +75,25 @@ class Main(models.Model):
             self.status = 2  # Разрешена регистрация
         else:
             self.status = 1  # Ожидается
+
+    def set_ready(self):
+        self.is_draft = False
+        self.sent_at = timezone.now()
+        self.save()
+
+    def allowed_voting(self):
+        return self.status == 3 
+    
+
+
+
+    # def is_fully_filled(self):
+    #     required_fields = ['issuer', 'meeting_location', 'meeting_date', 'decision_date', 'annual_or_unscheduled', 
+    #                        'inter_or_extra_mural', 'record_date', 'checkin', 'closeout', 'meeting_open', 
+    #                        'meeting_close', 'early_registration', 'deadline_date']
+    #     all_fields_filled = all(getattr(self, field) for field in required_fields)
+    #     has_agenda = Agenda.objects.filter(meeting=self).exists()
+    #     return all_fields_filled and has_agenda # Есть ли хотя бы один вопрос в повестке дня
 
     class Meta:
         db_table = 'meeting_main'
@@ -88,8 +113,8 @@ class Agenda(models.Model):
         unique_together = (('meeting', 'question_id'),)
 
 class QuestionDetail(models.Model):
-    question = models.ForeignKey(Agenda, on_delete=models.CASCADE, related_name='detail')
-    meeting = models.ForeignKey(Main, on_delete=models.CASCADE)
+    question_id = models.ForeignKey(Agenda, on_delete=models.CASCADE, related_name='details')
+    meeting_id = models.ForeignKey(Main, on_delete=models.CASCADE)
     detail_id = models.AutoField(primary_key=True)
     detail_text = models.TextField()
 
@@ -112,9 +137,9 @@ class VoteCount(models.Model):
 
 class VotingResult(models.Model):
     voting_result_id = models.AutoField(primary_key=True)
-    meeting = models.ForeignKey(Main, on_delete=models.CASCADE)
+    meeting_id = models.ForeignKey(Main, on_delete=models.CASCADE)
     account_id = models.IntegerField()
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
     json_result = models.JSONField(blank=True, null=True)
 
     class Meta:
@@ -152,10 +177,3 @@ class UserLink(models.Model):
     class Meta:
         db_table = 'meeting_user_link'
 
-# class Messages(models.Model):
-#     meeting = models.OneToOneField(Main, on_delete=models.CASCADE)
-#     created_at = models.DateField(auto_now_add=True)
-#     updated_at = models.DateField(auto_now=True)
-#     sent_at = models.DateField(auto_now=True)
-#     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='created_by', blank=True, null=True)
-#     is_read = models.BooleanField(default=False)

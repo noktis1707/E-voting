@@ -5,7 +5,7 @@ from .models import Main, Registrar, Issuer, Agenda, QuestionDetail, VoteCount, 
 
 class MeetingAdmin(admin.ModelAdmin):
     list_display = [ 
-            'meeting_name', 'meeting_id', 'meeting_date', 'status'
+            'meeting_name', 'meeting_id', 'meeting_date', 'status', 'created_at', 'updated_at', 'sent_at', 'is_draft'
         ]
     search_fields = ('issuer', 'registrar') 
 
