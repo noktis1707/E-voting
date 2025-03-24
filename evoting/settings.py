@@ -88,6 +88,17 @@ DATABASES = {
     }
 }
 
+# For docker
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME':'postgres',
+#         'USER':'postgres',
+#         'PASSWORD':'postgres',
+#         'HOST':'postgres',
+#         'PORT':'5432',
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -113,7 +124,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Yekaterinburg'
 
 USE_I18N = True
 
@@ -150,7 +161,7 @@ REST_FRAMEWORK = {
 from datetime import timedelta
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(hours=5),  # Токен живет 1 час
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),  # Токен живет 1 час
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),  # Refresh токен живет 7 дней
     "ROTATE_REFRESH_TOKENS": True,  # Обновлять refresh токен при каждом обновлении
     "BLACKLIST_AFTER_ROTATION": True,  # Запрещать использование старых refresh токенов

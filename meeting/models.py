@@ -62,19 +62,28 @@ class Main(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True) # Кто создал (email)
     sent_at = models.DateField(blank=True, null=True) # Дата отправления
 
+    # Обновление статуса собрания
     def update_status(self):
-        now = timezone.now()
+        if self.is_draft:
+            return
+        
+        now = timezone.localtime(timezone.now())
+        print(f"Сейчас: {now}")  
 
         if self.meeting_close and now >= self.meeting_close:
-            self.status = 5  # Собрание завершилось
+            new_status = 5  # Собрание завершилось
         elif self.vote_counting and now >= self.vote_counting:
-            self.status = 4  # Голосование завершено
+            new_status = 4  # Голосование завершено
         elif self.meeting_open and now >= self.meeting_open:
-            self.status = 3  # Разрешено голосование
+            new_status = 3  # Разрешено голосование
         elif self.checkin and now >= self.checkin:
-            self.status = 2  # Разрешена регистрация
+            new_status = 2  # Разрешена регистрация
         else:
-            self.status = 1  # Ожидается
+            new_status = 1  # Ожидается
+        
+        if self.status != new_status:
+            self.status = new_status
+            self.save(update_fields=['status'])
 
     def set_ready(self):
         self.is_draft = False
@@ -83,17 +92,6 @@ class Main(models.Model):
 
     def allowed_voting(self):
         return self.status == 3 
-    
-
-
-
-    # def is_fully_filled(self):
-    #     required_fields = ['issuer', 'meeting_location', 'meeting_date', 'decision_date', 'annual_or_unscheduled', 
-    #                        'inter_or_extra_mural', 'record_date', 'checkin', 'closeout', 'meeting_open', 
-    #                        'meeting_close', 'early_registration', 'deadline_date']
-    #     all_fields_filled = all(getattr(self, field) for field in required_fields)
-    #     has_agenda = Agenda.objects.filter(meeting=self).exists()
-    #     return all_fields_filled and has_agenda # Есть ли хотя бы один вопрос в повестке дня
 
     class Meta:
         db_table = 'meeting_main'
