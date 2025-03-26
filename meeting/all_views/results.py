@@ -12,6 +12,7 @@ class UserVotingResultsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, meeting_id, account_id):
+        """Результаты голосования пользователя"""
         user = request.user
         meeting = get_object_or_404(Main, pk=meeting_id)
         ballot = get_ballot_data(meeting_id)
@@ -45,6 +46,7 @@ class AdminVotingResultsView(APIView):
     permission_classes = [permissions.IsAdminUser]
 
     def get(self, request, meeting_id):
+        """Суммарные результаты голосования по собранию"""
         meeting = get_object_or_404(Main, pk=meeting_id)
         ballot = get_ballot_data(meeting_id)
 

@@ -10,6 +10,7 @@ class RegisterForMeetingView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, meeting_id, *args, **kwargs):
+        """Регистрация в собрании"""
         user = request.user
         meeting = get_object_or_404(Main, meeting_id=meeting_id)
 
@@ -44,6 +45,7 @@ class RegisteredUsersView(generics.ListAPIView):
     permission_classes = [permissions.IsAdminUser]
 
     def get(self, request, *args, **kwargs):
+        """Список зарегестрированных на собрании лиц (для админа)"""
         meeting_id =  self.kwargs.get("meeting_id")  
         meeting = get_object_or_404(Main, meeting_id=meeting_id)
         users_dict = []

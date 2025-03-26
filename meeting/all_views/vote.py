@@ -14,12 +14,14 @@ class VoteView(APIView):
 
     # Получение всех данных (собрание, повестка дня, подвопросы, количество голосов) для конкретного пользователя
     def get(self, request, meeting_id, account_id, *args, **kwargs):
+        """Получение всех данных (собрание, повестка дня, подвопросы, количество голосов) для конкретного пользователя"""
         user = request.user
         meeting = get_object_or_404(Main, meeting_id=meeting_id)
 
         # Проверка статуса собрания
-        if not meeting.allowed_voting:
+        if not meeting.allowed_voting():
             return Response({"error": "Голосование сейчас недоступно."}, status=status.HTTP_403_FORBIDDEN)
+        # print(meeting.allowed_voting())
 
         # Проверка зарегистрирован ли пользователь на этом собрании
         registrations = DjangoRelation.objects.filter(user=user, meeting=meeting, registered=True)
@@ -43,6 +45,7 @@ class VoteView(APIView):
 
     # Запись результатов
     def post(self, request, meeting_id, account_id):
+        """Запись результатов голосования"""
         user = request.user
         vote_data = request.data
         meeting = get_object_or_404(Main, meeting_id=meeting_id)

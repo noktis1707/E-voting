@@ -4,7 +4,7 @@ from .all_views import meeting, vote, register, results
 
 router = SimpleRouter()
 
-router.register('', meeting.MeetingViewSet, basename='meetings')
+router.register('api/meetings', meeting.MeetingViewSet, basename='meetings')
 
 
 urlpatterns = [  

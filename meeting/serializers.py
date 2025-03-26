@@ -1,5 +1,8 @@
 from rest_framework import serializers
 from .models import Main, QuestionDetail, Agenda, DjangoRelation, VoteCount, VotingResult
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class QuestionDetailSerializer(serializers.ModelSerializer):
     class Meta:
@@ -63,8 +66,14 @@ class MeetingSerializer(serializers.ModelSerializer):
                     QuestionDetail.objects.create(question_id=agenda, meeting_id=meeting, **detail)
         return meeting
     
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'email', 'avatar']
     
 class MeetingListSerializer(serializers.ModelSerializer):
+    created_by = UserSerializer(read_only=True)
     class Meta:
         model = Main
         fields = ['meeting_id', 'meeting_name', 'meeting_date', 'status', 'is_draft',

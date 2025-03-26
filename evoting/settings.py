@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'drf_spectacular',
+    'rest_framework_simplejwt.token_blacklist',
 
     'meeting',
     'users',
@@ -156,6 +158,7 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 from datetime import timedelta
@@ -166,4 +169,12 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": True,  # Обновлять refresh токен при каждом обновлении
     "BLACKLIST_AFTER_ROTATION": True,  # Запрещать использование старых refresh токенов
     "AUTH_HEADER_TYPES": ("Bearer",),  # Используем заголовок Authorization: Bearer <token>
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Evoting API',
+    'DESCRIPTION': 'Your project description',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    # OTHER SETTINGS
 }

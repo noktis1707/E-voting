@@ -33,9 +33,24 @@ class MeetingViewSet(viewsets.ModelViewSet):
         meeting_ids = DjangoRelation.objects.filter(user=user).values_list('meeting_id', flat=True)
         return meetings.filter(meeting_id__in=meeting_ids, is_draft=False)
     
+    def update(self, request, *args, **kwargs):
+        """Запрещаем редактирование отправленных собраний"""
+        meeting = self.get_object()
+        if not meeting.is_draft:
+            return Response({"error": "Редактирование отправленного собрания запрещено."}, status=status.HTTP_403_FORBIDDEN)
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        """Запрещаем частичное обновление отправленных собраний"""
+        meeting = self.get_object()
+        if not meeting.is_draft:
+            return Response({"error": "Редактирование отправленного собрания запрещено."}, status=status.HTTP_403_FORBIDDEN)
+        return super().partial_update(request, *args, **kwargs)
+    
     # Черновики все (только админ)
     @action(detail=False, methods=['get'], url_path='drafts', permission_classes=[permissions.IsAdminUser])
     def drafts(self, request):
+        """Список всех черновиков"""
         drafts = Main.objects.filter(is_draft=True)
         serializer = MeetingListSerializer(drafts, many=True)
         return Response(serializer.data)
@@ -43,6 +58,7 @@ class MeetingViewSet(viewsets.ModelViewSet):
     # Конкретный черновик (только админ) для возможного редактирования
     @action(detail=True, methods=['get', 'put', 'patch'], url_path='draft', permission_classes=[permissions.IsAdminUser])
     def draft_detail(self, request, pk=None):
+        """Конкретный черновик"""
         meeting = Main.objects.get(pk=pk)
 
         if not meeting.is_draft:
@@ -126,6 +142,7 @@ class MeetingViewSet(viewsets.ModelViewSet):
     # Отправка сообщения (собрания, меняется is_draft на false и сохраняется дата отправки)
     @action(detail=True, methods=['put'], url_path='send', permission_classes=[permissions.IsAdminUser])
     def send_meeting(self, request, pk=None):
+        """Отправка сообщения, проверяется все ли поля заполнены"""
         meeting = get_object_or_404(Main, pk=pk)
 
         # Проверка не отправлено ли сообщение ранее 
@@ -160,6 +177,7 @@ class MeetingViewSet(viewsets.ModelViewSet):
     # Создание собрания
     @action(detail=False, methods=['post'], url_path='create', permission_classes=[permissions.IsAdminUser])
     def create_meeting(self, request):
+        """Создание собрания"""
         serializer = MeetingSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(created_by=self.request.user)

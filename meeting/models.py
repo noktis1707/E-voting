@@ -68,7 +68,6 @@ class Main(models.Model):
             return
         
         now = timezone.localtime(timezone.now())
-        print(f"Сейчас: {now}")  
 
         if self.meeting_close and now >= self.meeting_close:
             new_status = 5  # Собрание завершилось
