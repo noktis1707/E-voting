@@ -7,7 +7,7 @@ class CustomUserAdmin(UserAdmin):
         'username', 'id', 'full_name', 's_n', 'born', 'is_staff' 
     )
     fieldsets = (
-        (None, {'fields': ('username', 'password', 'first_name', 'last_name', 'email',
+        (None, {'fields': ('username', 'password', 'first_name', 'last_name', 'email', 'avatar',
                             'is_active', 'is_staff', 'full_name', 's_n', 'born', 'groups')}), 
     )
 

@@ -38,7 +38,7 @@ class Main(models.Model):
     meeting_name = models.CharField(max_length=100, blank=True, null=True)      # описание собрания
     issuer = models.ForeignKey(Issuer, models.DO_NOTHING, blank=True, null=True)    # код эмитента
     meeting_location = models.CharField(max_length=200, blank=True, null=True)      # Место проведения \ почтовый адрес для направления бюллетеней
-    meeting_date = models.DateField(blank=True, null=True)      # Дата собрания
+    meeting_date = models.DateField(blank=True, null=True)      # Дата собрания 
     decision_date = models.DateField(blank=True, null=True)     # Дата принятия решения о созыве ОСА
     annual_or_unscheduled = models.BooleanField()               # Вид собрания (годовое или внеочередное) True - годовое, False - внеочередное
     first_or_repeated = models.BooleanField(blank=True, null=True)  # повторное или нет True - повторное, False - первичное

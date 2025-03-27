@@ -2,6 +2,10 @@ from rest_framework import serializers
 from .models import Main, QuestionDetail, Agenda, DjangoRelation, VoteCount, VotingResult
 from django.contrib.auth import get_user_model
 
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+
 User = get_user_model()
 
 class QuestionDetailSerializer(serializers.ModelSerializer):
@@ -97,3 +101,28 @@ class MeetingListSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = VotingResult
 #         fields = ['meeting_id', 'account_id', 'user_id', 'json_result']
+
+# Добавление флага is_staff 
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        
+        # Добавляем флаг администратора в ответ
+        data['is_staff'] = self.user.is_staff
+        return data
+    
+class CustomTokenRefreshSerializer(TokenRefreshSerializer):
+    def validate(self, attrs):
+        try:
+            refresh = RefreshToken(attrs["refresh"])  # Декодируем токен
+            data = super().validate(attrs)  # Получаем новый access-токен
+            
+            # Получаем пользователя
+            user = User.objects.get(id=refresh["user_id"])
+            data["is_staff"] = user.is_staff  # Добавляем is_staff
+
+            return data
+        except TokenError as e:
+            raise InvalidToken(str(e))
+        except User.DoesNotExist:
+            raise InvalidToken("User not found")

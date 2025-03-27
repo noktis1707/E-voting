@@ -5,7 +5,7 @@ from rest_framework.decorators import action
 from django.db import transaction
 
 from meeting.permissions import IsAdminOrReadOnly
-from meeting.models import Main, DjangoRelation, Agenda, QuestionDetail
+from meeting.models import Main, DjangoRelation, Agenda, QuestionDetail, VoteCount
 from meeting.serializers import MeetingSerializer, MeetingListSerializer
 # Собрания
 class MeetingViewSet(viewsets.ModelViewSet):
@@ -189,3 +189,37 @@ class MeetingViewSet(viewsets.ModelViewSet):
         meetings = self.get_queryset()
         serialized_meetings = MeetingListSerializer(meetings, many=True).data
         return Response(serialized_meetings)
+    
+    # Добавить информацию о регистрации для участника собрания
+    def retrieve(self, request, pk=None):
+        """Получение конкретного собрания"""
+        meeting = get_object_or_404(Main, pk=pk)
+        user = request.user
+        serializer = MeetingSerializer(meeting)
+
+        response_data = serializer.data
+
+        if not user.is_staff:
+            is_registered = DjangoRelation.objects.filter(user=user, meeting=meeting, registered=True).exists()
+            response_data["is_registered"] = is_registered
+
+        return Response(response_data)
+    
+    # Получение списка account_id для пользователя    
+    @action(detail=True, methods=['get'], url_path='accounts')
+    def get_user_accounts(self, request, pk=None):
+        """Получить список лицевых счетов по собранию"""
+        meeting = get_object_or_404(Main, pk=pk)
+        user = request.user
+
+        # Находим связи пользователя с собранием
+        accounts = DjangoRelation.objects.filter(user=user, meeting=meeting).values("account_id")
+
+        # Получить связанные данные из VoteCount (account_id и account_fullname)
+        vote_counts = VoteCount.objects.filter(meeting=meeting, account_id__in=accounts)
+
+        # Список словарей с account_id и account_fullname
+        accounts_info = [{"account_id": vote_count.account_id, "account_fullname": vote_count.account_fullname} for vote_count in vote_counts]
+
+        return Response({"meeting_id": pk, "accounts": accounts_info}, status=status.HTTP_200_OK)
+    

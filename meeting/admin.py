@@ -34,6 +34,16 @@ class VotingResultAdmin(admin.ModelAdmin):
             'account_id', 'user_id', 'meeting_id'
         ]
     
+class RegistrarAdmin(admin.ModelAdmin):
+    list_display = [ 
+            'registrar_name', 'registrar_id'
+        ]
+    
+class IssuerAdmin(admin.ModelAdmin):
+    list_display = [ 
+            'short_name', 'full_name', 'issuer_id'
+        ]
+    
 admin.site.register(Main, MeetingAdmin)
 # admin.site.register(Registrar)
 # admin.site.register(Issuer)
@@ -42,6 +52,6 @@ admin.site.register(QuestionDetail, QuestionDetailAdmin)
 admin.site.register(VoteCount, VoteCountAdmin)
 admin.site.register(VotingResult, VotingResultAdmin)
 admin.site.register(DjangoRelation, DjangoRelationAdmin)
-admin.site.register(Registrar)
-admin.site.register(Issuer)
+admin.site.register(Registrar, RegistrarAdmin)
+admin.site.register(Issuer, IssuerAdmin)
 
