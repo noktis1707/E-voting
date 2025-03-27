@@ -5,8 +5,8 @@ from rest_framework.decorators import action
 from django.db import transaction
 
 from meeting.permissions import IsAdminOrReadOnly
-from meeting.models import Main, DjangoRelation, Agenda, QuestionDetail, VoteCount
-from meeting.serializers import MeetingSerializer, MeetingListSerializer
+from meeting.models import Main, DjangoRelation, Agenda, QuestionDetail, VoteCount, Issuer
+from meeting.serializers import MeetingSerializer, MeetingListSerializer, IssuerInfoSerializer
 # Собрания
 class MeetingViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, IsAdminOrReadOnly]
@@ -175,14 +175,21 @@ class MeetingViewSet(viewsets.ModelViewSet):
         }, status=status.HTTP_200_OK)
     
     # Создание собрания
-    @action(detail=False, methods=['post'], url_path='create', permission_classes=[permissions.IsAdminUser])
+    @action(detail=False, methods=['get','post'], url_path='create', permission_classes=[permissions.IsAdminUser])
     def create_meeting(self, request):
         """Создание собрания"""
-        serializer = MeetingSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(created_by=self.request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # Получение списка эмитентов при создании собрания
+        if request.method == 'GET':
+            issuer = Issuer.objects.all()
+            serializer = IssuerInfoSerializer(issuer, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        if request.method == 'POST':
+            serializer = MeetingSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save(created_by=self.request.user)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     # Для пользователя список собраний, в которых он может участвовать 
     def list(self, request, *args, **kwargs):

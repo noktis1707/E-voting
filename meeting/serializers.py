@@ -13,6 +13,11 @@ class IssuerListSerializer(serializers.ModelSerializer):
         model = Issuer
         fields = ['short_name', 'address']
 
+class IssuerInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Issuer
+        fields = ['issuer_id', 'full_name']
+
 class QuestionDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = QuestionDetail
