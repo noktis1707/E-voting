@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Main, QuestionDetail, Agenda, DjangoRelation, VoteCount, VotingResult
+from .models import Main, QuestionDetail, Agenda, Issuer, DjangoRelation, VoteCount, VotingResult
 from django.contrib.auth import get_user_model
 
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
@@ -75,13 +75,19 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'email', 'avatar']
+
+class IssuerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Issuer
+        fields = ['short_name']
     
 class MeetingListSerializer(serializers.ModelSerializer):
     created_by = UserSerializer(read_only=True)
+    issuer = IssuerSerializer()
     class Meta:
         model = Main
-        fields = ['meeting_id', 'meeting_name', 'meeting_date', 'status', 'is_draft',
-                  'updated_at', 'created_by', 'sent_at']
+        fields = ['meeting_id', 'issuer', 'meeting_date', 'status', 'is_draft', 'first_or_repeated',
+                  'annual_or_unscheduled', 'updated_at', 'created_by', 'sent_at']
     
 # class VoteCountSerializer(serializers.ModelSerializer):
 #     class Meta:

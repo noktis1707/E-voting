@@ -26,7 +26,7 @@ class DjangoRelationAdmin(admin.ModelAdmin):
     
 class VoteCountAdmin(admin.ModelAdmin):
     list_display = [ 
-            'account_id', 'account_fullname', 'json_quantity'
+            'account_id', 'account_fullname', 'meeting', 'json_quantity'
         ]
     
 class VotingResultAdmin(admin.ModelAdmin):
