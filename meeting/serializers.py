@@ -8,6 +8,11 @@ from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 
 User = get_user_model()
 
+class IssuerListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Issuer
+        fields = ['short_name', 'address']
+
 class QuestionDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = QuestionDetail
@@ -31,6 +36,7 @@ class AgendaSerializer(serializers.ModelSerializer):
 class MeetingSerializer(serializers.ModelSerializer):
     meeting_url = serializers.ReadOnlyField()
     agenda = AgendaSerializer(many=True)
+    issuer = IssuerListSerializer()
 
     class Meta:
         model = Main
