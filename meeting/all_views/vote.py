@@ -5,6 +5,7 @@ from rest_framework.generics import get_object_or_404
 from meeting.models import Main, DjangoRelation, VoteCount, VotingResult
 from meeting.serializers import MeetingSerializer
 from meeting.ballot.get_ballot import get_ballot_data
+from meeting.services.account_service import get_accounts, registered
 
 
 # Бюллетень
@@ -21,12 +22,9 @@ class VoteView(APIView):
         # Проверка статуса собрания
         if not meeting.allowed_voting():
             return Response({"error": "Голосование сейчас недоступно."}, status=status.HTTP_403_FORBIDDEN)
-        # print(meeting.allowed_voting())
 
         # Проверка зарегистрирован ли пользователь на этом собрании
-        registrations = DjangoRelation.objects.filter(user=user, meeting=meeting, registered=True)
-
-        if not registrations.exists():
+        if not registered(meeting, user):
             return Response(
                 {"error": "Вы не зарегистрированы на это собрание."},
                 status=status.HTTP_403_FORBIDDEN
@@ -58,16 +56,14 @@ class VoteView(APIView):
             return Response({"error": "Нет данных для голосования."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Проверка, зарегистрирован ли пользователь
-        is_registered = DjangoRelation.objects.filter(user=user, meeting=meeting_id, registered=True).exists()
-        if not is_registered:
+        # is_registered = DjangoRelation.objects.filter(user=user, meeting=meeting_id, registered=True).exists()
+        if not registered(meeting, user):
             return Response({"error": "Вы не зарегистрированы на этом собрании."}, status=status.HTTP_403_FORBIDDEN)
 
-        # Проверка, что у пользователя есть лицевые счета для голосования
-        user_accounts = VoteCount.objects.filter(meeting=meeting_id, account_id__in=DjangoRelation.objects.filter(
-            user=user, meeting=meeting_id
-        ).values_list("account_id", flat=True))
+        # # Проверка, что у пользователя есть лицевые счета для голосования
+        user_accounts = get_accounts(meeting, user)
 
-        if not user_accounts.exists():
+        if not user_accounts:
             return Response({"error": "У вас нет прав для голосования в этом собрании."}, status=status.HTTP_403_FORBIDDEN)
 
         # Проверка, голосовал ли пользователь ранее

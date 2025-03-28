@@ -38,27 +38,23 @@ class AgendaSerializer(serializers.ModelSerializer):
         validated_data['details'] = details_data  
         return validated_data
 
-class MeetingSerializer(serializers.ModelSerializer):
+class MeetingCreateUpdateSerializer(serializers.ModelSerializer):
     meeting_url = serializers.ReadOnlyField()
     agenda = AgendaSerializer(many=True)
-    issuer = IssuerListSerializer()
-
     class Meta:
         model = Main
-        # fields = '__all__'  # Отдаем все поля
         fields = [ 
-            'meeting_id', 'meeting_name', 'issuer', 'meeting_location', 'meeting_date', 'decision_date',
-            'deadline_date', 'checkin', 'closeout', 'meeting_open', 'meeting_close', 'vote_counting', 
-            'first_or_repeated', 'record_date', 'annual_or_unscheduled', 'inter_or_extra_mural',
-            'early_registration', 'meeting_url', 'status', 'agenda'
-        ]
-
+                'meeting_id', 'meeting_name', 'issuer', 'meeting_location', 'meeting_date', 'decision_date',
+                'deadline_date', 'checkin', 'closeout', 'meeting_open', 'meeting_close', 'vote_counting', 
+                'first_or_repeated', 'record_date', 'annual_or_unscheduled', 'inter_or_extra_mural',
+                'early_registration', 'meeting_url', 'status', 'agenda'
+            ]
+    
     def create(self, validated_data):
         issuer = validated_data.get('issuer')
         meeting_name = validated_data.get('meeting_name')
         validated_data['meeting_name'] = issuer.full_name if not meeting_name else meeting_name
         agenda_data = validated_data.pop('agenda', [])
-        print(agenda_data)
         meeting = Main.objects.create(**validated_data)
 
         for agenda_item in agenda_data:
@@ -80,6 +76,23 @@ class MeetingSerializer(serializers.ModelSerializer):
                 for detail in details_data:
                     QuestionDetail.objects.create(question_id=agenda, meeting_id=meeting, **detail)
         return meeting
+
+
+class MeetingSerializer(serializers.ModelSerializer):
+    meeting_url = serializers.ReadOnlyField()
+    agenda = AgendaSerializer(many=True)
+    issuer = IssuerListSerializer()
+
+    class Meta:
+        model = Main
+        # fields = '__all__'  # Отдаем все поля
+        fields = [ 
+            'meeting_id', 'meeting_name', 'issuer', 'meeting_location', 'meeting_date', 'decision_date',
+            'deadline_date', 'checkin', 'closeout', 'meeting_open', 'meeting_close', 'vote_counting', 
+            'first_or_repeated', 'record_date', 'annual_or_unscheduled', 'inter_or_extra_mural',
+            'early_registration', 'meeting_url', 'status', 'agenda'
+        ]
+
     
 
 class UserSerializer(serializers.ModelSerializer):

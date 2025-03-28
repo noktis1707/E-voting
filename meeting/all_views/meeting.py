@@ -3,10 +3,11 @@ from rest_framework.response import Response
 from rest_framework.generics import get_object_or_404
 from rest_framework.decorators import action
 from django.db import transaction
+from meeting.services.account_service import get_accounts
 
 from meeting.permissions import IsAdminOrReadOnly
 from meeting.models import Main, DjangoRelation, Agenda, QuestionDetail, VoteCount, Issuer
-from meeting.serializers import MeetingSerializer, MeetingListSerializer, IssuerInfoSerializer
+from meeting.serializers import MeetingSerializer, MeetingListSerializer, IssuerInfoSerializer, MeetingCreateUpdateSerializer
 # Собрания
 class MeetingViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, IsAdminOrReadOnly]
@@ -56,7 +57,7 @@ class MeetingViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
     
     # Конкретный черновик (только админ) для возможного редактирования
-    @action(detail=True, methods=['get', 'put', 'patch'], url_path='draft', permission_classes=[permissions.IsAdminUser])
+    @action(detail=True, methods=['get', 'put'], url_path='draft', permission_classes=[permissions.IsAdminUser])
     def draft_detail(self, request, pk=None):
         """Конкретный черновик"""
         meeting = Main.objects.get(pk=pk)
@@ -66,16 +67,28 @@ class MeetingViewSet(viewsets.ModelViewSet):
 
         # Вернуть заполненные данные черновика
         if request.method == 'GET':
-            serializer = MeetingSerializer(meeting)
+            serializer = MeetingCreateUpdateSerializer(meeting)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         # Обновление данных черновика
-        if request.method in ['PUT', 'PATCH']:
+        if request.method in ['PUT']:
             meeting_data = request.data.copy()
             agenda_data = meeting_data.pop('agenda', [])
 
+            required_fields = {
+                'meeting_id', 'meeting_name', 'issuer', 'meeting_location', 'meeting_date', 'decision_date',
+                'deadline_date', 'checkin', 'closeout', 'meeting_open', 'meeting_close', 'vote_counting', 
+                'first_or_repeated', 'record_date', 'annual_or_unscheduled', 'inter_or_extra_mural',
+                'early_registration', 'meeting_url', 'status'
+            }
+            missing_fields = required_fields - set(meeting_data.keys())
+
+            if missing_fields:
+                return Response({"error": f"Отсутствуют обязательные поля: {', '.join(missing_fields)}"},
+                                status=status.HTTP_400_BAD_REQUEST)
+
             # Обновление данных собрания
-            serializer = MeetingSerializer(meeting, data=meeting_data, partial=True)
+            serializer = MeetingCreateUpdateSerializer(meeting, data=meeting_data, partial=True)
 
             if not serializer.is_valid():
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -185,7 +198,7 @@ class MeetingViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
         
         if request.method == 'POST':
-            serializer = MeetingSerializer(data=request.data)
+            serializer = MeetingCreateUpdateSerializer(data=request.data)
             if serializer.is_valid():
                 serializer.save(created_by=self.request.user)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -207,6 +220,11 @@ class MeetingViewSet(viewsets.ModelViewSet):
         response_data = serializer.data
 
         if not user.is_staff:
+            # Проверка, что у пользователя есть лицевые счета для голосования
+            user_accounts = get_accounts(meeting, user)
+            if not user_accounts:
+                return Response({"error": "У вас нет прав для голосования в этом собрании."}, status=status.HTTP_403_FORBIDDEN)
+
             is_registered = DjangoRelation.objects.filter(user=user, meeting=meeting, registered=True).exists()
             response_data["is_registered"] = is_registered
 
@@ -219,14 +237,11 @@ class MeetingViewSet(viewsets.ModelViewSet):
         meeting = get_object_or_404(Main, pk=pk)
         user = request.user
 
-        # Находим связи пользователя с собранием
-        accounts = DjangoRelation.objects.filter(user=user, meeting=meeting).values("account_id")
+        accounts = get_accounts(meeting, user)
 
-        # Получить связанные данные из VoteCount (account_id и account_fullname)
-        vote_counts = VoteCount.objects.filter(meeting=meeting, account_id__in=accounts)
+        if not accounts:
+            return Response({"error": "У вас нет прав для голосования в этом собрании."}, status=status.HTTP_403_FORBIDDEN)
 
-        # Список словарей с account_id и account_fullname
-        accounts_info = [{"account_id": vote_count.account_id, "account_fullname": vote_count.account_fullname} for vote_count in vote_counts]
 
-        return Response({"meeting_id": pk, "accounts": accounts_info}, status=status.HTTP_200_OK)
+        return Response({"meeting_id": pk, "accounts": accounts}, status=status.HTTP_200_OK)
     
