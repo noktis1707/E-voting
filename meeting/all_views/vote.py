@@ -29,7 +29,15 @@ class VoteView(APIView):
                 {"error": "Вы не зарегистрированы на это собрание."},
                 status=status.HTTP_403_FORBIDDEN
             )
+        
+        existing_votes = VotingResult.objects.filter(
+            meeting_id=meeting_id, account_id=account_id, user_id=user
+        ).first()
 
+        if existing_votes and existing_votes.json_result is not None:
+            return Response({"error": "Вы уже проголосовали, повторное голосование невозможно."},
+                            status=status.HTTP_403_FORBIDDEN)
+        
         ballot_data = get_ballot_data(meeting_id)
 
         # Количество голосов
