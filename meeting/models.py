@@ -64,7 +64,7 @@ class Main(models.Model):
 
     # Обновление статуса собрания
     def update_status(self):
-        if self.is_draft:
+        if self.is_draft or self.status == 5:
             return
         
         now = timezone.localtime(timezone.now())
@@ -90,10 +90,23 @@ class Main(models.Model):
         self.save()
 
     def allowed_voting(self):
-        return self.status == 3 
-
+        now = timezone.localtime(timezone.now())
+        if self.status == 3:
+            return True
+        if self.early_registration == True and self.deadline_date and now.date() <= self.deadline_date:
+            return True
+        return False
+    
+    def register(self):
+        now = timezone.localtime(timezone.now())
+        if self.status == 2:
+            return True
+        if self.early_registration == True and self.deadline_date and now.date() <= self.deadline_date:
+            return True
+        return False
+    
     class Meta:
-        db_table = 'meeting_main'
+        db_table = 'meeting_main'         
 
 class Agenda(models.Model):
     question_id = models.AutoField(primary_key=True)

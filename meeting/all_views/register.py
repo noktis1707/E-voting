@@ -14,7 +14,7 @@ class RegisterForMeetingView(APIView):
         user = request.user
         meeting = get_object_or_404(Main, meeting_id=meeting_id)
 
-        if meeting.status != 2:
+        if not meeting.register:
             return Response({"error": "Регистрация не разрешена."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Проверка на наличие связей

@@ -214,6 +214,7 @@ class MeetingViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, pk=None):
         """Получение конкретного собрания"""
         meeting = get_object_or_404(Main, pk=pk)
+        meeting.update_status()
         user = request.user
         serializer = MeetingSerializer(meeting)
 

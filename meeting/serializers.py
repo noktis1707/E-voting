@@ -67,14 +67,14 @@ class MeetingCreateUpdateSerializer(serializers.ModelSerializer):
             # Создание записи повестки дня
             agenda = Agenda.objects.create(meeting=meeting, **agenda_item)
 
-            # Создание подвопроса только для кумулятивных вопросов
-            if is_cumulative and details_data:
+            # Создание подвопроса 
+            if details_data:
                 for detail in details_data:
                     QuestionDetail.objects.create(question_id=agenda, meeting_id=meeting, **detail)
-            elif not is_cumulative and details_data:
-                agenda.single_vote_per_shareholder = True
-                for detail in details_data:
-                    QuestionDetail.objects.create(question_id=agenda, meeting_id=meeting, **detail)
+            # elif not is_cumulative and details_data:
+            #     agenda.single_vote_per_shareholder = True
+            #     for detail in details_data:
+            #         QuestionDetail.objects.create(question_id=agenda, meeting_id=meeting, **detail)
         return meeting
 
 

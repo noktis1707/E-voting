@@ -92,6 +92,17 @@ DATABASES = {
     }
 }
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME':'test',
+#         'USER':'postgres',
+#         'PASSWORD':'Noktis1707!',
+#         'HOST':'localhost',
+#         'PORT':'5432',
+#     }
+# }
+
 # For docker
 # DATABASES = {
 #     'default': {

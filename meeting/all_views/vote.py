@@ -5,7 +5,7 @@ from rest_framework.generics import get_object_or_404
 from meeting.models import Main, DjangoRelation, VoteCount, VotingResult
 from meeting.serializers import MeetingSerializer
 from meeting.ballot.get_ballot import get_ballot_data
-from meeting.services.account_service import get_accounts, registered
+from meeting.services.account_service import get_accounts, registered, has_account
 
 
 # Бюллетень
@@ -30,6 +30,16 @@ class VoteView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
         
+        # Проверка, что у пользователя есть лицевые счета для голосования
+        user_accounts = get_accounts(meeting, user)
+
+        if not user_accounts:
+            return Response({"error": "У вас нет прав для голосования в этом собрании."}, status=status.HTTP_403_FORBIDDEN)
+        
+        # Проверка, что переданный account_id принадлежит пользователю
+        if not has_account(meeting, user, account_id):
+            return Response({"error": "Вы не можете голосовать по данному лицевому счёту."}, status=status.HTTP_403_FORBIDDEN)
+
         existing_votes = VotingResult.objects.filter(
             meeting_id=meeting_id, account_id=account_id, user_id=user
         ).first()
@@ -73,17 +83,20 @@ class VoteView(APIView):
 
         if not user_accounts:
             return Response({"error": "У вас нет прав для голосования в этом собрании."}, status=status.HTTP_403_FORBIDDEN)
+        
+        # Проверка, что account_id принадлежит пользователю
+        if not has_account(meeting, user, account_id):
+            return Response({"error": "Вы не можете голосовать по данному лицевому счёту."}, status=status.HTTP_403_FORBIDDEN)
 
         # Проверка, голосовал ли пользователь ранее
         existing_votes = VotingResult.objects.filter(
             meeting_id=meeting_id, account_id=account_id, user_id=user
         ).first()
 
-        if existing_votes and existing_votes.json_result is not None:
-            return Response({"error": "Вы уже проголосовали, повторное голосование невозможно."},
-                            status=status.HTTP_403_FORBIDDEN)
-        
         if existing_votes:
+            if existing_votes.json_result is not None:
+                return Response({"error": "Вы уже проголосовали, повторное голосование невозможно."},
+                                status=status.HTTP_403_FORBIDDEN)
             existing_votes.json_result = vote_data
             existing_votes.save()
 

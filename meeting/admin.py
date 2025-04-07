@@ -21,17 +21,17 @@ class QuestionDetailAdmin(admin.ModelAdmin):
 
 class DjangoRelationAdmin(admin.ModelAdmin):
     list_display = [ 
-            'user', 'account_id', 'meeting', 'vote_count'
+            'user', 'account_id', 'meeting', 'vote_count', 'voting_result'
         ]
     
 class VoteCountAdmin(admin.ModelAdmin):
     list_display = [ 
-            'account_id', 'account_fullname', 'meeting', 'json_quantity'
+            'account_id', 'vote_count_id','account_fullname', 'meeting', 'json_quantity'
         ]
     
 class VotingResultAdmin(admin.ModelAdmin):
     list_display = [ 
-            'account_id', 'user_id', 'meeting_id'
+            'account_id', 'voting_result_id','user_id', 'meeting_id', 'json_result'
         ]
     
 class RegistrarAdmin(admin.ModelAdmin):

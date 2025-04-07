@@ -20,4 +20,13 @@ def registered(meeting, user):
                                                     meeting=meeting, registered=True).exists()
       return is_registered
 
+# Проверка принадлежит ли лицевой счет пользователю
+def has_account(meeting, user, account_id):
+    return DjangoRelation.objects.filter(
+        meeting=meeting,
+        user=user,
+        account_id=account_id,
+        registered=True
+    ).exists()
+
       
