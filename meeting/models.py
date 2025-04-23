@@ -101,8 +101,6 @@ class Main(models.Model):
         now = timezone.localtime(timezone.now())
         if self.status == 2:
             return True
-        if self.early_registration == True and self.deadline_date and now.date() <= self.deadline_date:
-            return True
         return False
     
     class Meta:

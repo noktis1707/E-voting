@@ -1,6 +1,6 @@
 from django.urls import path
 from rest_framework.routers import SimpleRouter
-from .all_views import meeting, vote, register, results
+from .views import meeting, vote, register, results
 
 router = SimpleRouter()
 

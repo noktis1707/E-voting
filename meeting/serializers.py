@@ -59,7 +59,6 @@ class MeetingCreateUpdateSerializer(serializers.ModelSerializer):
 
         for agenda_item in agenda_data:
             details_data = agenda_item.pop('details', [])
-            is_cumulative = agenda_item.get('cumulative', False)
 
             # Устанавливаем seat_count перед созданием Agenda
             agenda_item['seat_count'] = len(details_data) 
@@ -71,10 +70,6 @@ class MeetingCreateUpdateSerializer(serializers.ModelSerializer):
             if details_data:
                 for detail in details_data:
                     QuestionDetail.objects.create(question_id=agenda, meeting_id=meeting, **detail)
-            # elif not is_cumulative and details_data:
-            #     agenda.single_vote_per_shareholder = True
-            #     for detail in details_data:
-            #         QuestionDetail.objects.create(question_id=agenda, meeting_id=meeting, **detail)
         return meeting
 
 
@@ -85,7 +80,6 @@ class MeetingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Main
-        # fields = '__all__'  # Отдаем все поля
         fields = [ 
             'meeting_id', 'meeting_name', 'issuer', 'meeting_location', 'meeting_date', 'decision_date',
             'deadline_date', 'checkin', 'closeout', 'meeting_open', 'meeting_close', 'vote_counting', 

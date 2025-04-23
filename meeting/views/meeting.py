@@ -6,7 +6,7 @@ from django.db import transaction
 from meeting.services.account_service import get_accounts
 
 from meeting.permissions import IsAdminOrReadOnly
-from meeting.models import Main, DjangoRelation, Agenda, QuestionDetail, VoteCount, Issuer
+from meeting.models import Main, DjangoRelation, Agenda, QuestionDetail, VoteCount, Issuer, VotingResult
 from meeting.serializers import MeetingSerializer, MeetingListSerializer, IssuerInfoSerializer, MeetingCreateUpdateSerializer
 # Собрания
 class MeetingViewSet(viewsets.ModelViewSet):
@@ -242,7 +242,6 @@ class MeetingViewSet(viewsets.ModelViewSet):
 
         if not accounts:
             return Response({"error": "У вас нет прав для голосования в этом собрании."}, status=status.HTTP_403_FORBIDDEN)
-
-
+        
         return Response({"meeting_id": pk, "accounts": accounts}, status=status.HTTP_200_OK)
     

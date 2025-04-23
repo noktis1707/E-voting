@@ -19,7 +19,7 @@ from django.contrib import admin
 from django.urls import path, include
 # from rest_framework_simplejwt import views as jwt_views
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView 
-from meeting.views import CustomTokenObtainPairView, CustomTokenRefreshView
+from meeting.views.tokens import CustomTokenObtainPairView, CustomTokenRefreshView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
