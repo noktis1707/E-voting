@@ -30,10 +30,10 @@ def get_accounts(meeting, user):
             
       return accounts_info
 
-# Проверка зарагестрирован ли пользователь в собрании
-def registered(meeting, user):
+# Проверка зарагестрирован ли пользователь в собрании (по лицевому счету для досрочного голосования)
+def registered(meeting, user, account_id):
       is_registered = DjangoRelation.objects.filter(user=user, 
-                                                    meeting=meeting, registered=True).exists()
+                                                    meeting=meeting, account_id = account_id, registered=True).exists()
       return is_registered
 
 # Проверка принадлежит ли лицевой счет пользователю
@@ -41,8 +41,7 @@ def has_account(meeting, user, account_id):
     return DjangoRelation.objects.filter(
         meeting=meeting,
         user=user,
-        account_id=account_id,
-        registered=True
+        account_id=account_id
     ).exists()
 
       

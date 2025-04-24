@@ -5,6 +5,7 @@ from rest_framework.generics import get_object_or_404
 from meeting.models import Main, DjangoRelation, VotingResult
 from meeting.ballot.get_ballot import get_ballot_data
 from meeting.services.voting_service import get_summarized_voting_results
+from meeting.services.account_service import registered
 
 
 # Результаты голосования пользователя
@@ -16,9 +17,8 @@ class UserVotingResultsView(APIView):
         user = request.user
         meeting = get_object_or_404(Main, pk=meeting_id)
         ballot = get_ballot_data(meeting_id)
-
-        is_registered = DjangoRelation.objects.filter(meeting=meeting, account_id=account_id, registered=True).exists()
-        if not is_registered:
+        
+        if not registered(meeting, user, account_id):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
         if user.is_staff:

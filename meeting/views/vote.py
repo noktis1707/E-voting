@@ -23,13 +23,6 @@ class VoteView(APIView):
         if not meeting.allowed_voting():
             return Response({"error": "Голосование сейчас недоступно."}, status=status.HTTP_403_FORBIDDEN)
 
-        # Проверка зарегистрирован ли пользователь на этом собрании
-        if not registered(meeting, user):
-            return Response(
-                {"error": "Вы не зарегистрированы на это собрание."},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
         # Проверка, что у пользователя есть лицевые счета для голосования
         user_accounts = get_accounts(meeting, user)
 
@@ -40,6 +33,15 @@ class VoteView(APIView):
         if not has_account(meeting, user, account_id):
             return Response({"error": "Вы не можете голосовать по данному лицевому счёту."}, status=status.HTTP_403_FORBIDDEN)
 
+        # Проверка зарегистрирован ли пользователь на этом собрании
+        is_registered = registered(meeting, user, account_id)
+        # Проверка доступно ли досрочное голосование на этом собрании
+        is_early_voting = meeting.early_voting_allowed()
+
+        # Если не доступно досрочное голсование - проверка зарегестрирован ли пользователь в собрании
+        if not is_registered and not is_early_voting:
+            return Response({"error": "Вы не зарегистрированы на это собрание."}, status=status.HTTP_403_FORBIDDEN)
+        
         existing_votes = VotingResult.objects.filter(
             meeting_id=meeting_id, account_id=account_id, user_id=user
         ).first()
@@ -74,8 +76,9 @@ class VoteView(APIView):
             return Response({"error": "Нет данных для голосования."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Проверка, зарегистрирован ли пользователь
-        # is_registered = DjangoRelation.objects.filter(user=user, meeting=meeting_id, registered=True).exists()
-        if not registered(meeting, user):
+        # is_registered = DjangoRelation.objects.filter(user=user, meeting=meeting_id,  account_id=account_id, registered=True).exists()
+        is_registered = registered(meeting, user, account_id)
+        if not is_registered and not meeting.early_voting_allowed():
             return Response({"error": "Вы не зарегистрированы на этом собрании."}, status=status.HTTP_403_FORBIDDEN)
 
         # # Проверка, что у пользователя есть лицевые счета для голосования
@@ -99,5 +102,12 @@ class VoteView(APIView):
                                 status=status.HTTP_403_FORBIDDEN)
             existing_votes.json_result = vote_data
             existing_votes.save()
+
+            if not is_registered and meeting.early_voting_allowed():
+                DjangoRelation.objects.filter(
+                    user=user,
+                    meeting=meeting,
+                    account_id=account_id
+                ).update(registered=True)
 
         return Response({"message": "Ваш голос успешно сохранён."}, status=status.HTTP_201_CREATED)

@@ -1,4 +1,6 @@
 from rest_framework import viewsets, permissions, status
+from datetime import timedelta
+from django.utils.dateparse import parse_date
 from rest_framework.response import Response
 from rest_framework.generics import get_object_or_404
 from rest_framework.decorators import action
@@ -77,7 +79,7 @@ class MeetingViewSet(viewsets.ModelViewSet):
 
             required_fields = {
                 'meeting_id', 'meeting_name', 'issuer', 'meeting_location', 'meeting_date', 'decision_date',
-                'deadline_date', 'checkin', 'closeout', 'meeting_open', 'meeting_close', 'vote_counting', 
+                'checkin', 'closeout', 'meeting_open', 'meeting_close', 'vote_counting', 
                 'first_or_repeated', 'record_date', 'annual_or_unscheduled', 'inter_or_extra_mural',
                 'early_registration', 'meeting_url', 'status'
             }
@@ -86,7 +88,7 @@ class MeetingViewSet(viewsets.ModelViewSet):
             if missing_fields:
                 return Response({"error": f"Отсутствуют обязательные поля: {', '.join(missing_fields)}"},
                                 status=status.HTTP_400_BAD_REQUEST)
-
+            
             # Обновление данных собрания
             serializer = MeetingCreateUpdateSerializer(meeting, data=meeting_data, partial=True)
 

@@ -1,4 +1,5 @@
 from django.utils import timezone
+from datetime import timedelta
 from django.db import models
 from django.contrib.auth import get_user_model
 
@@ -62,6 +63,11 @@ class Main(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True) # Кто создал (email)
     sent_at = models.DateField(blank=True, null=True) # Дата отправления
 
+    def save(self, *args, **kwargs):
+        if self.early_registration and self.meeting_date:
+            self.deadline_date = self.meeting_date - timedelta(days=2)
+        super().save(*args, **kwargs)
+
     # Обновление статуса собрания
     def update_status(self):
         if self.is_draft or self.status == 5:
@@ -101,7 +107,13 @@ class Main(models.Model):
         now = timezone.localtime(timezone.now())
         if self.status == 2:
             return True
+        if self.early_registration == True and self.deadline_date and now.date() <= self.deadline_date:
+            return True
         return False
+    
+    def early_voting_allowed(self):
+        now = timezone.localtime(timezone.now()).date()
+        return self.early_registration and self.deadline_date and now <= self.deadline_date
     
     class Meta:
         db_table = 'meeting_main'         

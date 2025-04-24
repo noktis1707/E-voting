@@ -21,7 +21,7 @@ class QuestionDetailAdmin(admin.ModelAdmin):
 
 class DjangoRelationAdmin(admin.ModelAdmin):
     list_display = [ 
-            'user', 'account_id', 'meeting', 'vote_count', 'voting_result'
+            'user', 'account_id', 'meeting', 'vote_count', 'voting_result', 'registered'
         ]
     
 class VoteCountAdmin(admin.ModelAdmin):
