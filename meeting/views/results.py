@@ -18,9 +18,6 @@ class UserVotingResultsView(APIView):
         meeting = get_object_or_404(Main, pk=meeting_id)
         ballot = get_ballot_data(meeting_id)
         
-        if not registered(meeting, user, account_id):
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
         if user.is_staff:
             # Администратор может смотреть результаты голосования по любому account_id в собрании
             result = VotingResult.objects.filter(meeting_id=meeting, account_id=account_id).first()
@@ -32,7 +29,7 @@ class UserVotingResultsView(APIView):
         else:
             # Обычный пользователь может смотреть только свои результаты голосования по доступному account_id
             result = VotingResult.objects.filter(meeting_id=meeting, account_id=account_id, user_id=user).first()
-            if not result:
+            if not result or result.json_result is None:
                 return Response(status=status.HTTP_404_NOT_FOUND)  # Если голосов нет, просто 404
 
         return Response({

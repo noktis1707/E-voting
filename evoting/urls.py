@@ -20,6 +20,8 @@ from django.urls import path, include
 # from rest_framework_simplejwt import views as jwt_views
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView 
 from meeting.views.tokens import CustomTokenObtainPairView, CustomTokenRefreshView
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -30,4 +32,4 @@ urlpatterns = [
     path('api/token/refresh/', CustomTokenRefreshView.as_view(), name ='token_refresh'), 
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='docs'), 
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
