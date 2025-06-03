@@ -1,7 +1,9 @@
+import random
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from rest_framework_simplejwt.tokens import RefreshToken
 
+COLORS = ['green', 'yellow', 'red', 'blue', 'orange', 'purple','gray', 'pink']
     
 class User(AbstractUser):
     avatar = models.CharField(max_length=300, blank=True, null=True)
@@ -15,6 +17,11 @@ class User(AbstractUser):
             'refresh':str(refresh),
             'access':str(refresh.access_token)
         }
+    
+    def save(self, *args, **kwargs):
+        if not self.avatar:
+            self.avatar = random.choice(COLORS)
+        super().save(*args, **kwargs)
 
 
     class Meta:

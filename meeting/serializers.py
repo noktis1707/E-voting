@@ -88,7 +88,6 @@ class MeetingSerializer(serializers.ModelSerializer):
         ]
 
     
-
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -107,25 +106,6 @@ class MeetingListSerializer(serializers.ModelSerializer):
         fields = ['meeting_id', 'issuer', 'meeting_date', 'status', 'is_draft', 'first_or_repeated',
                   'annual_or_unscheduled', 'updated_at', 'created_by', 'sent_at']
     
-# class VoteCountSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = VoteCount
-#         fields = ['account_id', 'account_fullname', 'json_quantity']
-    
-# class RegisteredUserWithAccountsSerializer(serializers.ModelSerializer):
-#     user_id = serializers.IntegerField(source="user.id")
-#     full_name = serializers.CharField(source="user.full_name")
-#     email = serializers.EmailField(source="user.email")
-
-#     class Meta:
-#         model = DjangoRelation
-#         fields = ["user_id", "full_name", "email", "account_id"]
-
-# class VotingResultSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = VotingResult
-#         fields = ['meeting_id', 'account_id', 'user_id', 'json_result']
-
 # Добавление флага is_staff 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):

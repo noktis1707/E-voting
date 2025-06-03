@@ -82,19 +82,6 @@ WSGI_APPLICATION = 'evoting.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME':'Evoting',
-#         'USER':'admin',
-#         'PASSWORD':'OC-HdiEK9F',
-#         'HOST':'localhost',
-#         'PORT':'5432',
-#     }
-# }
-
-
-# For docker
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -151,12 +138,6 @@ AUTH_USER_MODEL = 'users.User'
 
 CSRF_COOKIE_SECURE=True
 
-# REST_FRAMEWORK = {
-#     'DEFAULT_AUTHENTICATION_CLASSES': (
-#         'rest_framework.authentication.TokenAuthentication',
-#     ),
-# }
-
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -170,22 +151,11 @@ from datetime import timedelta
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),  # Токен живет 1 час
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),  # Refresh токен живет 7 дней
-    # "ROTATE_REFRESH_TOKENS": True,  # Обновлять refresh токен при каждом обновлении
     "BLACKLIST_AFTER_ROTATION": True,  # Запрещать использование старых refresh токенов
     "AUTH_HEADER_TYPES": ("Bearer",),  # Используем заголовок Authorization: Bearer <token>
 }
 
-SPECTACULAR_SETTINGS = {
-    'TITLE': 'Evoting API',
-    'DESCRIPTION': 'Your project description',
-    'VERSION': '1.0.0',
-    'SERVE_INCLUDE_SCHEMA': False,
-    # OTHER SETTINGS
-}
-
-
 CORS_ORIGIN_ALLOW_ALL = True 
-
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 

@@ -1,15 +1,13 @@
 from rest_framework import viewsets, permissions, status
-from datetime import timedelta
-from django.utils.dateparse import parse_date
 from rest_framework.response import Response
 from rest_framework.generics import get_object_or_404
 from rest_framework.decorators import action
 from django.db import transaction
 from meeting.services.account_service import get_accounts
-
 from meeting.permissions import IsAdminOrReadOnly
-from meeting.models import Main, DjangoRelation, Agenda, QuestionDetail, VoteCount, Issuer, VotingResult
+from meeting.models import Main, DjangoRelation, Agenda, QuestionDetail, Issuer
 from meeting.serializers import MeetingSerializer, MeetingListSerializer, IssuerInfoSerializer, MeetingCreateUpdateSerializer
+
 # Собрания
 class MeetingViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, IsAdminOrReadOnly]
@@ -88,6 +86,12 @@ class MeetingViewSet(viewsets.ModelViewSet):
             if missing_fields:
                 return Response({"error": f"Отсутствуют обязательные поля: {', '.join(missing_fields)}"},
                                 status=status.HTTP_400_BAD_REQUEST)
+            
+            if str(pk) != str(meeting_data.get("meeting_id")):
+                return Response(
+                    {"error": "Идентификатор собрания (meeting_id) в URL и теле запроса не совпадают."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             
             # Обновление данных собрания
             serializer = MeetingCreateUpdateSerializer(meeting, data=meeting_data, partial=True)
@@ -168,7 +172,7 @@ class MeetingViewSet(viewsets.ModelViewSet):
         required_fields = [
             'issuer', 'meeting_location', 'meeting_date', 'decision_date',
             'record_date', 'checkin', 'closeout', 'meeting_open',
-            'meeting_close', 'deadline_date'
+            'meeting_close', 'vote_counting'
         ]
         missing_fields = [field for field in required_fields if not getattr(meeting, field, None)]
 

@@ -63,8 +63,9 @@ class Main(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True) # Кто создал (email)
     sent_at = models.DateField(blank=True, null=True) # Дата отправления
 
+    # Автоматический расчет даты окончания приема бюллетеней (за два дня до собрания)
     def save(self, *args, **kwargs):
-        if self.early_registration and self.meeting_date:
+        if self.meeting_date:
             self.deadline_date = self.meeting_date - timedelta(days=2)
         super().save(*args, **kwargs)
 
@@ -90,11 +91,13 @@ class Main(models.Model):
             self.status = new_status
             self.save(update_fields=['status'])
 
+    # Обновление статуса черновка при отправке собрания
     def set_ready(self):
         self.is_draft = False
         self.sent_at = timezone.now()
         self.save()
 
+    # Проверка доступно ли голсование
     def allowed_voting(self):
         now = timezone.localtime(timezone.now())
         if self.status == 3:
@@ -103,6 +106,7 @@ class Main(models.Model):
             return True
         return False
     
+    # Проверка доступно ли регистрация 
     def register(self):
         now = timezone.localtime(timezone.now())
         if self.status == 2:
@@ -111,6 +115,7 @@ class Main(models.Model):
             return True
         return False
     
+    # Доступно ли досрочное голосование 
     def early_voting_allowed(self):
         now = timezone.localtime(timezone.now()).date()
         return self.early_registration and self.deadline_date and now <= self.deadline_date
